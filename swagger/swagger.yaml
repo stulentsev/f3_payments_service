@@ -1,0 +1,339 @@
+swagger: '2.0'
+info:
+  version: "0.0.1"
+  title: Form3 Corelib data structures.
+schemes:
+  - http
+basePath: /v1
+paths:
+
+ #paymentapi - start
+
+  /payments:
+
+    post:
+      summary: Create payment
+      tags:
+       - Payments
+      consumes:
+        - application/vnd.api+json
+        - application/json
+      parameters:
+        - name: Payment creation request
+          in: body
+          schema:
+            $ref: "#/definitions/PaymentCreation"
+
+      responses:
+        201:
+          description: Payment creation response
+          schema:
+            $ref: "#/definitions/PaymentCreationResponse"
+
+        400:
+          description: Payment creation error
+          schema:
+            $ref: "#/definitions/ApiError"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/ApiError"
+
+    get:
+      summary: List payments
+      tags:
+        - Payments
+      parameters:
+        - name: filter[currency]
+          in: query
+          required: false
+          type: string
+
+      responses:
+        200:
+          description: List of payment details
+          schema:
+            $ref: "#/definitions/PaymentDetailsListResponse"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/ApiError"
+
+  /payments/{id}:
+    get:
+      summary: Get Payment Details
+      tags:
+        - Payments
+      parameters:
+        - name: id
+          in: path
+          description: Payment Id
+          required: true
+          type: string
+          format: uuid
+      responses:
+        200:
+          description: Payment Details
+          schema:
+            $ref: "#/definitions/PaymentDetailsResponse"
+        404:
+          description: Not found
+          schema:
+            $ref: "#/definitions/ApiError"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/ApiError"
+
+    patch:
+      summary: Update Payment
+      tags:
+        - Payments
+      consumes:
+        - application/vnd.api+json
+        - application/json
+      parameters:
+        - name: id
+          in: path
+          description: Payment Id
+          required: true
+          type: string
+          format: uuid
+        - name: Payment update request
+          in: body
+          schema:
+            $ref: "#/definitions/PaymentUpdate"
+      responses:
+        202:
+          description: Request Accepted
+        404:
+          description: Not found
+          schema:
+            $ref: "#/definitions/ApiError"
+        400:
+          description: Payment Update Error
+          schema:
+            $ref: "#/definitions/ApiError"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/ApiError"
+
+    delete:
+      summary: Delete a Payment
+      tags:
+        - Payments
+      parameters:
+        - name: id
+          in: path
+          description: Payment Id
+          required: true
+          type: string
+          format: uuid
+      responses:
+        204:
+          description: Payment Deleted
+        404:
+          description: Not found
+          schema:
+            $ref: "#/definitions/ApiError"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/ApiError"
+
+#paymentapi - end
+
+definitions:
+
+  ApiError:
+    type: object
+    properties:
+      error_message:
+        type: string
+      error_code:
+        type: string
+        format: uuid
+
+# paymentapi - start
+  Payment:
+    type: object
+    required:
+      - id
+      - organisation_id
+      - attributes
+    properties:
+      type:
+        type: string
+        pattern: ^[A-Za-z_]*$
+      id:
+        type: string
+        format: uuid
+      version:
+        type: integer
+        minimum: 0
+      organisation_id:
+        type: string
+        format: uuid
+      attributes:
+        $ref: '#/definitions/PaymentAttributes'
+
+  PaymentAttributes:
+    type: object
+    properties:
+      amount:
+        type: string
+        pattern: ^[0-9.]{0,20}$
+      beneficiary_party:
+        type: object
+        properties:
+          account_name:
+            type: string
+          account_number:
+            type: string
+            pattern: ^[A-Z0-9]{6,34}$
+          account_number_code:
+            $ref: '#/definitions/AccountNumberCode'
+          account_type:
+            type: integer
+          address:
+            type: string
+          bank_id:
+            type: string
+          bank_id_code:
+            $ref: '#/definitions/BankIdCode'
+          name:
+            type: string
+      charges_information:
+        $ref: '#/definitions/ChargesInformation'
+      currency:
+        type: string
+      debtor_party:
+        type: object
+        properties:
+          account_name:
+            type: string
+          account_number:
+            type: string
+            pattern: ^[A-Z0-9]{6,34}$
+          account_number_code:
+            $ref: '#/definitions/AccountNumberCode'
+          address:
+            type: string
+          bank_id:
+            type: string
+          bank_id_code:
+            $ref: '#/definitions/BankIdCode'
+          name:
+            type: string
+      sponsor_party:
+        type: object
+        properties:
+          account_number:
+            type: string
+            pattern: ^[A-Z0-9]{6,34}$
+          bank_id:
+            type: string
+          bank_id_code:
+            $ref: '#/definitions/BankIdCode'
+      end_to_end_reference:
+        type: string
+      fx:
+        type: object
+        properties:
+          contract_reference:
+            type: string
+          exchange_rate:
+            type: string
+          original_amount:
+            type: string
+          original_currency:
+            type: string
+      numeric_reference:
+        type: string
+      payment_id:
+        type: string
+      payment_purpose:
+        type: string
+      payment_scheme:
+        type: string
+      payment_type:
+        type: string
+      processing_date:
+        type: string
+        format: date
+      reference:
+        type: string
+      scheme_payment_sub_type:
+        type: string
+      scheme_payment_type:
+        type: string
+
+  AccountNumberCode:
+    type: string
+    enum:
+      - IBAN
+      - BBAN
+
+  BankIdCode:
+    type: string
+    enum:
+      - GBDSC
+
+  PaymentCreation:
+    type: object
+    properties:
+      data:
+        $ref: '#/definitions/Payment'
+
+  PaymentUpdate:
+    type: object
+    properties:
+      data:
+        type: object
+        required:
+          - attributes
+        properties:
+          attributes:
+            $ref: '#/definitions/PaymentAttributes'
+
+  PaymentCreationResponse:
+    type: object
+    properties:
+      data:
+        $ref: '#/definitions/Payment'
+
+  PaymentDetailsResponse:
+    type: object
+    properties:
+      data:
+        $ref: '#/definitions/Payment'
+
+  PaymentDetailsListResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/Payment'
+
+  ChargesInformation:
+    type: object
+    properties:
+      bearer_code:
+        type: string
+      receiver_charges_amount:
+        type: string
+      receiver_charges_currency:
+        type: string
+      sender_charges:
+        type: array
+        items:
+          type: object
+          properties:
+            amount:
+              type: string
+            currency:
+              type: string
+
+# paymentapi - end
